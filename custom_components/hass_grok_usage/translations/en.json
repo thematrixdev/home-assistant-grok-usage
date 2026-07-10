@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connect xAI Grok Usage",
-        "description": "Enter Grok credentials from another machine where `grok login` was completed.\n\nRequired: Access Token\nOptional: Account ID and Refresh Token\n\nOpen ~/.grok/auth.json. Under the `https://auth.x.ai::...` entry, copy `key` -> Access Token, `refresh_token` -> Refresh Token, and optionally `team_id` or `user_id` -> Account ID.",
+        "description": "Enter Grok credentials from another machine where `grok login` was completed.\n\nRequired: Access Token\nOptional: Account ID and Refresh Token\n\nOpen ~/.grok/auth.json. Under the `auth.x.ai::...` entry, copy `key` to Access Token, `refresh_token` to Refresh Token, and optionally `team_id` or `user_id` to Account ID.",
         "data": {
           "access_token": "Access Token",
           "account_id": "Account ID (optional)",
