@@ -22,6 +22,8 @@ def test_as_percent():
     assert _as_percent(True) is None
     assert _as_percent("bad") is None
     assert _as_percent(None) is None
+    assert _as_percent(float("nan")) is None
+    assert _as_percent(float("inf")) is None
 
 
 def test_parse_iso():

@@ -103,7 +103,7 @@ class GrokUsageConfigFlow(ConfigFlow, domain=DOMAIN):
                 timeout=aiohttp.ClientTimeout(total=15),
             )
             return resp.ok
-        except aiohttp.ClientError:
+        except (aiohttp.ClientError, TimeoutError):
             _LOGGER.exception("Grok auth validation request failed")
             return False
 
@@ -137,14 +137,16 @@ class GrokUsageConfigFlow(ConfigFlow, domain=DOMAIN):
                 ):
                     return self.async_abort(reason="account_mismatch")
 
+                credential_updates = {
+                    CONF_ACCESS_TOKEN: access_token,
+                    CONF_ACCOUNT_ID: account_id,
+                    CONF_REFRESH_TOKEN: refresh_token,
+                }
                 return self.async_update_reload_and_abort(
                     reauth_entry,
                     unique_id=account_id if account_id else reauth_entry.unique_id,
-                    data_updates={
-                        CONF_ACCESS_TOKEN: access_token,
-                        CONF_ACCOUNT_ID: account_id,
-                        CONF_REFRESH_TOKEN: refresh_token,
-                    },
+                    data_updates=credential_updates,
+                    options_updates=credential_updates,
                 )
             else:
                 errors[CONF_ACCESS_TOKEN] = "invalid_access_token"

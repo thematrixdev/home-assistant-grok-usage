@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -17,7 +18,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     CONF_ACCESS_TOKEN,
-    CONF_ACCOUNT_ID,
     CONF_REFRESH_TOKEN,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
@@ -33,17 +33,6 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR]
 
 type GrokUsageConfigEntry = ConfigEntry[GrokUsageCoordinator]
-
-
-async def async_migrate_entry(hass: HomeAssistant, entry: GrokUsageConfigEntry) -> bool:
-    """Migrate config entry to a new version."""
-    if entry.version == 1 and entry.unique_id is None:
-        account_id = _normalize_credential_value(entry.data.get(CONF_ACCOUNT_ID, ""))
-        # ponytail: fall back to entry_id if no account_id stored — reauth replaces it
-        if not account_id:
-            account_id = entry.entry_id
-        hass.config_entries.async_update_entry(entry, unique_id=account_id)
-    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: GrokUsageConfigEntry) -> bool:
@@ -113,28 +102,47 @@ class GrokUsageCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "Authentication failed - run `grok login` on the Grok machine "
                     "and update credentials"
                 ) from err
-            try:
-                new_access_token, new_refresh_token = await _refresh_access_token(
-                    session=session,
-                    refresh_token=refresh_token,
-                )
-            except aiohttp.ClientError as refresh_err:
-                raise ConfigEntryAuthFailed(
-                    "Token refresh failed - run `grok login` on the Grok machine "
-                    "and update credentials"
-                ) from refresh_err
-            access_token = new_access_token
-            if new_refresh_token:
-                refresh_token = new_refresh_token
-            self._update_stored_credentials(
-                access_token=access_token,
-                refresh_token=refresh_token,
-            )
-            raw = await _fetch_grok_usage(session=session, access_token=access_token)
-        except aiohttp.ClientError as err:
+            raw = await self._refresh_and_retry(session, refresh_token)
+        except (aiohttp.ClientError, TimeoutError) as err:
             raise UpdateFailed(f"Error fetching usage data: {err}") from err
 
         return _parse_usage(raw)
+
+    async def _refresh_and_retry(
+        self,
+        session: aiohttp.ClientSession,
+        refresh_token: str,
+    ) -> dict[str, Any]:
+        """Refresh the access token and retry the usage fetch once."""
+        try:
+            access_token, new_refresh_token = await _refresh_access_token(
+                session=session,
+                refresh_token=refresh_token,
+            )
+        except (aiohttp.ClientError, TimeoutError, ValueError) as refresh_err:
+            raise ConfigEntryAuthFailed(
+                "Token refresh failed - run `grok login` on the Grok machine "
+                "and update credentials"
+            ) from refresh_err
+
+        if new_refresh_token:
+            refresh_token = new_refresh_token
+        self._update_stored_credentials(
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )
+
+        try:
+            return await _fetch_grok_usage(session=session, access_token=access_token)
+        except aiohttp.ClientResponseError as err:
+            if err.status in (401, 403):
+                raise ConfigEntryAuthFailed(
+                    "Authentication still failing after token refresh - run "
+                    "`grok login` on the Grok machine and update credentials"
+                ) from err
+            raise UpdateFailed(f"Error fetching usage data: {err}") from err
+        except (aiohttp.ClientError, TimeoutError) as err:
+            raise UpdateFailed(f"Error fetching usage data: {err}") from err
 
     def _update_stored_credentials(self, access_token: str, refresh_token: str) -> None:
         """Persist newly refreshed credentials."""
@@ -194,6 +202,8 @@ async def _refresh_access_token(
     )
     resp.raise_for_status()
     token_data = await resp.json()
+    if not isinstance(token_data, dict):
+        raise ConfigEntryAuthFailed("Token refresh response was not a JSON object")
     access_token = token_data.get("access_token")
     if not isinstance(access_token, str) or not access_token:
         raise ConfigEntryAuthFailed("Token refresh response missing access_token")
@@ -278,6 +288,6 @@ def _as_percent(value: Any) -> float | None:
     else:
         return None
 
-    if numeric < 0 or numeric > 1000:
+    if not math.isfinite(numeric) or numeric < 0 or numeric > 1000:
         return None
     return round(numeric, 2)
