@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect xAI Grok Usage",
+        "description": "Enter Grok credentials from another machine where `grok login` was completed.\n\nRequired: Access Token\nOptional: Account ID and Refresh Token\n\nOpen ~/.grok/auth.json. Under the `https://auth.x.ai::...` entry, copy `key` -> Access Token, `refresh_token` -> Refresh Token, and optionally `team_id` or `user_id` -> Account ID.",
+        "data": {
+          "access_token": "Access Token",
+          "account_id": "Account ID (optional)",
+          "account_name": "Account Name (optional, e.g. Personal / Work)",
+          "refresh_token": "Refresh Token (optional)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconnect xAI Grok Usage",
+        "description": "Your credentials are invalid or expired. Enter fresh credentials from a machine where Grok is logged in.",
+        "data": {
+          "access_token": "Access Token",
+          "account_id": "Account ID (optional)",
+          "refresh_token": "Refresh Token (optional)"
+        }
+      }
+    },
+    "error": {
+      "missing_access_token": "Please enter access token",
+      "invalid_access_token": "Credential validation failed. Ensure the token is fresh and copied correctly."
+    },
+    "abort": {
+      "already_configured": "This Grok account is already configured",
+      "account_mismatch": "Re-authentication must use the same Grok account",
+      "reauth_successful": "Re-authentication was successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "xAI Grok Usage Options",
+        "description": "Configure polling interval and credentials.",
+        "data": {
+          "update_interval": "Update interval (seconds)",
+          "access_token": "Access Token",
+          "account_id": "Account ID (optional)",
+          "refresh_token": "Refresh Token (optional)"
+        }
+      }
+    }
+  }
+}

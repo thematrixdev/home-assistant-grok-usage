@@ -1,0 +1,1 @@
+{"domain":"hass_grok_usage","name":"xAI Grok Usage","codeowners":["@thematrixdev"],"config_flow":true,"documentation":"https://github.com/thematrixdev/home-assistant-grok-usage","iot_class":"cloud_polling","issue_tracker":"https://github.com/thematrixdev/home-assistant-grok-usage/issues","requirements":[],"version":"1"}

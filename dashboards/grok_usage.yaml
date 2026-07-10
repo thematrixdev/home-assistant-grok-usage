@@ -1,0 +1,32 @@
+# Multi-account example: replace entity IDs with your actual sensor names.
+# Find yours in HA → Settings → Devices & Services → Entities → filter "grok".
+title: xAI Grok Usage
+views:
+  - title: Usage
+    path: usage
+    cards:
+      # Account 1 (Personal)
+      - type: entities
+        title: "Personal"
+        entities:
+          - entity: sensor.xai_grok_usage_personal_weekly_usage_limit
+            name: Weekly Usage Limit
+          - entity: sensor.xai_grok_usage_personal_weekly_reset_time
+            name: Weekly Reset Time
+
+      - type: entity
+        entity: sensor.xai_grok_usage_personal_api_error
+        name: API Error (Personal)
+
+      # Account 2 (Work)
+      - type: entities
+        title: "Work"
+        entities:
+          - entity: sensor.xai_grok_usage_work_weekly_usage_limit
+            name: Weekly Usage Limit
+          - entity: sensor.xai_grok_usage_work_weekly_reset_time
+            name: Weekly Reset Time
+
+      - type: entity
+        entity: sensor.xai_grok_usage_work_api_error
+        name: API Error (Work)
