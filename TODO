@@ -1,0 +1,6 @@
+# TODO
+
+- Submit `hass_grok_usage` (icon + logo) to the Home Assistant brands repo
+  (https://github.com/home-assistant/brands) to clear the HACS "brands" check.
+  Until then the HACS validation workflow reports 1/9 failing; the integration
+  still installs and works via a HACS custom repository.
