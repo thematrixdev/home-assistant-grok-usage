@@ -146,7 +146,7 @@ class GrokUsageConfigFlow(ConfigFlow, domain=DOMAIN):
                     reauth_entry,
                     unique_id=account_id if account_id else reauth_entry.unique_id,
                     data_updates=credential_updates,
-                    options_updates=credential_updates,
+                    options={**reauth_entry.options, **credential_updates},
                 )
             else:
                 errors[CONF_ACCESS_TOKEN] = "invalid_access_token"
